@@ -1,6 +1,6 @@
 namespace src.Pokemon
 {
-    public struct Learnset
+    public record struct Learnset
     {
         public required LearnMove[] Moves;
 
