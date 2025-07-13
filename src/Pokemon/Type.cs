@@ -1,0 +1,21 @@
+namespace src.Pokemon
+{
+    public enum Type : byte
+    {
+        Bug,
+        Dragon,
+        Electric,
+        Fighting,
+        Fire,
+        Flying,
+        Ghost,
+        Grass,
+        Ground,
+        Ice,
+        Normal,
+        Poison,
+        Psychic,
+        Rock,
+        Water,
+    }
+}
