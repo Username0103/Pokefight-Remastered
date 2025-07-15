@@ -11,6 +11,9 @@ namespace src.DataClasses
         [Key(1)]
         public required Pokestats Stats;
 
+        [IgnoreMember]
+        public required Pokestats EffectiveStats;
+
         [Key(2)]
         public required Type Type1;
 
