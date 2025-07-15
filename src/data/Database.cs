@@ -10,7 +10,7 @@ namespace src.data
         {
             string path = GetDbPath();
             Directory.CreateDirectory(Path.GetDirectoryName(path) ?? path);
-            if (!File.Exists(path))
+            if (!File.Exists(path) && !File.Exists(Methods.CACHE_PATH))
                 ExtractDb(path);
         }
 
@@ -67,6 +67,7 @@ namespace src.data
         public DbSet<PokemonMoves> PokemonMoves { get; set; }
         public DbSet<PokemonStats> PokemonStats { get; set; }
         public DbSet<PokemonTypes> PokemonTypes { get; set; }
+        public DbSet<TypeEffectiveness> TypeEffectiveness { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
@@ -75,11 +76,17 @@ namespace src.data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Moves>().HasNoKey();
-            modelBuilder.Entity<Pokemon>().HasNoKey();
-            modelBuilder.Entity<PokemonMoves>().HasNoKey();
-            modelBuilder.Entity<PokemonStats>().HasNoKey();
-            modelBuilder.Entity<PokemonTypes>().HasNoKey();
+            void Add<T>()
+                where T : class
+            {
+                modelBuilder.Entity<T>().HasNoKey();
+            }
+            Add<Moves>();
+            Add<Pokemon>();
+            Add<PokemonMoves>();
+            Add<PokemonStats>();
+            Add<PokemonTypes>();
+            Add<TypeEffectiveness>();
         }
     }
 }

@@ -7,16 +7,31 @@ namespace src.data
     public static class Methods
     {
         private static readonly int LEVEL_UP_MOVE_LEARN_METHOD = 1;
-        private static readonly string CACHE_PATH = Path.Join(
+        public static readonly string CACHE_PATH = Path.Join(
             Path.GetDirectoryName(Database.GetDbPath()),
             "DB_cache.bin"
         );
 
-        public static Pokemon[] GetAllPokemon()
+        private struct Cache
         {
+            public required Pokemon[] pokemon;
+            public required Effectiveness[] effectivenesses;
+        }
+
+        public static Pokemon[] GetAllPokemon(out Effectiveness[] effectivenesses)
+        {
+            string dbPath = Database.GetDbPath();
             if (File.Exists(CACHE_PATH))
             {
-                return MessagePackSerializer.Deserialize<Pokemon[]>(File.ReadAllBytes(CACHE_PATH));
+                if (File.Exists(dbPath))
+                {
+                    File.Delete(dbPath);
+                }
+                var cached = MessagePackSerializer.Deserialize<Cache>(
+                    File.ReadAllBytes(CACHE_PATH)
+                );
+                effectivenesses = cached.effectivenesses;
+                return cached.pokemon;
             }
             using var db = new DatabaseContext();
             Pokemon[] result =
@@ -25,15 +40,34 @@ namespace src.data
                     .Pokemon.Where(p => p.generation == 1 && p.is_default)
                     .Select(pokemon => BuildPokemon(db, pokemon)),
             ];
+            effectivenesses = GetTypeChart(db);
+            var newCache = new Cache { pokemon = result, effectivenesses = effectivenesses };
             // fire and forget
             Task.Run(async () =>
             {
                 await using var stream = new FileStream(path: CACHE_PATH, FileMode.OpenOrCreate);
-                await MessagePackSerializer.SerializeAsync(stream, result);
+                await MessagePackSerializer.SerializeAsync(stream, newCache);
                 await stream.FlushAsync();
+                File.Delete(dbPath);
             });
 
             return result;
+        }
+
+        private static Effectiveness[] GetTypeChart(DatabaseContext db)
+        {
+            HashSet<int> typeIds = [.. Enum.GetValues<DataClasses.Type>().Select((v) => (int)v)];
+            return
+            [
+                .. from e in db.TypeEffectiveness
+                where typeIds.Contains(e.damage_type_id) && typeIds.Contains(e.target_type_id)
+                select new Effectiveness
+                {
+                    Factor = e.damage_factor_percent / 100.0,
+                    Source = (DataClasses.Type)e.damage_type_id,
+                    Target = (DataClasses.Type)e.target_type_id,
+                },
+            ];
         }
 
         private static Pokemon BuildPokemon(DatabaseContext db, models.Pokemon pokemon)
@@ -51,6 +85,7 @@ namespace src.data
             {
                 Name = pokemon.identifier,
                 Stats = stats,
+                EffectiveStats = stats,
                 Type1 = type1obj,
                 Type2 = type2obj,
                 learnset = learnset,
