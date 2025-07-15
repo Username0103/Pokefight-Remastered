@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Text.Json;
+using src.data;
 
 namespace src
 {
@@ -6,12 +7,9 @@ namespace src
     {
         public static void Main(string[] args)
         {
-            var assembly =
-                Assembly.GetExecutingAssembly()
-                ?? throw new SystemException("Could not get execution assembly.");
-            var names = assembly.GetManifestResourceNames();
-            foreach (var name in names)
-                Console.WriteLine(name);
+            Database.Initialize();
+            var options = new JsonSerializerOptions { IncludeFields = true, WriteIndented = true };
+            Console.WriteLine(JsonSerializer.Serialize(Methods.GetAllPokemon()[149], options));
         }
     }
 }

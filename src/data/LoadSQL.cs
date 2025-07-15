@@ -1,5 +1,6 @@
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using src.data.models;
 
 namespace src.data
 {
@@ -42,10 +43,12 @@ namespace src.data
         {
             var names = assembly.GetManifestResourceNames();
             foreach (var name in names)
+            {
                 if (name.EndsWith(".sqlite"))
                 {
                     return name;
                 }
+            }
             return null;
         }
 
@@ -59,11 +62,24 @@ namespace src.data
 
     public class DatabaseContext : DbContext
     {
-        // add DbSet<DbModel>s here...
+        public DbSet<Moves> Moves { get; set; }
+        public DbSet<Pokemon> Pokemon { get; set; }
+        public DbSet<PokemonMoves> PokemonMoves { get; set; }
+        public DbSet<PokemonStats> PokemonStats { get; set; }
+        public DbSet<PokemonTypes> PokemonTypes { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
             options.UseSqlite($"Data Source={data.Database.GetDbPath()}");
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Moves>().HasNoKey();
+            modelBuilder.Entity<Pokemon>().HasNoKey();
+            modelBuilder.Entity<PokemonMoves>().HasNoKey();
+            modelBuilder.Entity<PokemonStats>().HasNoKey();
+            modelBuilder.Entity<PokemonTypes>().HasNoKey();
         }
     }
 }
