@@ -7,9 +7,13 @@
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="src\data\pokedex.sqlite" />
+    <EmbeddedResource Include="static\*.flac" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="MessagePack" Version="3.1.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.7" />
+    <PackageReference Include="SoundFlow" Version="1.1.1" />
+    <PackageReference Include="Spectre.Console" Version="0.50.0" />
+    <PackageReference Include="Spectre.Console.Cli" Version="0.50.0" />
   </ItemGroup>
 </Project>
