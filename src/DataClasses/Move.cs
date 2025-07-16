@@ -1,9 +1,9 @@
 using MessagePack;
 
-namespace src.DataClasses
+namespace Src.DataClasses
 {
     [MessagePackObject]
-    public record struct Move
+    public record class Move
     {
         [Key(0)]
         public required string Name;
@@ -26,5 +26,7 @@ namespace src.DataClasses
 
         [Key(6)]
         public required int? Accuracy;
+
+        // TODO: add some kind of move flags object where I can put things like `if (move.Flags.isHighCritMove)`
     }
 }

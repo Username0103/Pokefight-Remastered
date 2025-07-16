@@ -1,9 +1,9 @@
 using MessagePack;
 
-namespace src.DataClasses
+namespace Src.DataClasses
 {
     [MessagePackObject]
-    public record struct Pokestats
+    public record class Pokestats
     {
         [Key(0)]
         public required int HP;

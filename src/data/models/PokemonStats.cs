@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace src.data.models
+namespace Src.Data.models
 {
     [Table("pokemon_stats")]
     public class PokemonStats

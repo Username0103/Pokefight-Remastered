@@ -1,4 +1,4 @@
-namespace src.DataClasses
+namespace Src.DataClasses
 {
     public enum Category : byte
     {

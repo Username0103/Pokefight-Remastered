@@ -1,9 +1,9 @@
 using MessagePack;
 
-namespace src.DataClasses
+namespace Src.DataClasses
 {
     [MessagePackObject]
-    public record struct LearnSet
+    public record class LearnSet
     {
         [Key(0)]
         public required LearnMove[] Moves;
