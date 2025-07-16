@@ -1,8 +1,8 @@
-using System.Reflection;
 using Microsoft.EntityFrameworkCore;
-using src.data.models;
+using Src.Data.models;
+using static Src.Misc.Utils;
 
-namespace src.data
+namespace Src.Data
 {
     public static class Database
     {
@@ -16,16 +16,13 @@ namespace src.data
 
         private static void ExtractDb(string path)
         {
-            Assembly assembly =
-                Assembly.GetExecutingAssembly()
-                ?? throw new SystemException("Could not get execution assembly.");
-
-            var DbResourceName =
-                GetDbResourceName(assembly)
+            var DbResourceName = (
+                GetResourcesWithEnding(".sqlite")
                 ?? throw new SystemException(
                     $"Could not get database from EXE embeds."
                         + " Ensure the PackageReference in .csproj is correct."
-                );
+                )
+            ).Single();
 
             using Stream resourceStream =
                 assembly.GetManifestResourceStream(DbResourceName)
@@ -37,19 +34,6 @@ namespace src.data
                 access: FileAccess.Write
             );
             resourceStream.CopyTo(fileStream);
-        }
-
-        private static string? GetDbResourceName(Assembly assembly)
-        {
-            var names = assembly.GetManifestResourceNames();
-            foreach (var name in names)
-            {
-                if (name.EndsWith(".sqlite"))
-                {
-                    return name;
-                }
-            }
-            return null;
         }
 
         public static string GetDbPath()
@@ -71,7 +55,7 @@ namespace src.data
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
-            options.UseSqlite($"Data Source={data.Database.GetDbPath()}");
+            options.UseSqlite($"Data Source={Data.Database.GetDbPath()}");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
