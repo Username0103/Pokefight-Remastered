@@ -1,9 +1,18 @@
-namespace src.DataClasses
+using MessagePack;
+using Src.Misc;
+
+namespace Src.DataClasses
 {
-    public class Effectiveness
+    [MessagePackObject]
+    public record class Effectiveness
     {
+        [Key(0)]
         public required Type Source;
+
+        [Key(1)]
         public required Type Target;
-        public required double Factor;
+
+        [Key(2)]
+        public required EffectivenessLevel Factor;
     }
 }
