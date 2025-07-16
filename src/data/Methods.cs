@@ -1,8 +1,10 @@
 using MessagePack;
-using src.DataClasses;
-using static src.DataClasses.LearnSet;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Src.DataClasses;
+using Src.Misc;
+using static Src.DataClasses.LearnSet;
 
-namespace src.data
+namespace Src.Data
 {
     public static class Methods
     {
@@ -12,13 +14,19 @@ namespace src.data
             "DB_cache.bin"
         );
 
-        private struct Cache
+        [MessagePackObject]
+        public struct Cache
         {
-            public required Pokemon[] pokemon;
+            [Key(0)]
+            public required PokemonDefinition[] pokemon;
+
+            [Key(1)]
             public required Effectiveness[] effectivenesses;
         }
 
-        public static Pokemon[] GetAllPokemon(out Effectiveness[] effectivenesses)
+        // todo: make caching part of the build process rather than running at runtime (to reduce exe size and loading times.)
+        // maybe MSBuild?
+        public static PokemonDefinition[] GetAllPokemon(out Effectiveness[] typeChart)
         {
             string dbPath = Database.GetDbPath();
             if (File.Exists(CACHE_PATH))
@@ -30,18 +38,18 @@ namespace src.data
                 var cached = MessagePackSerializer.Deserialize<Cache>(
                     File.ReadAllBytes(CACHE_PATH)
                 );
-                effectivenesses = cached.effectivenesses;
+                typeChart = cached.effectivenesses;
                 return cached.pokemon;
             }
             using var db = new DatabaseContext();
-            Pokemon[] result =
+            PokemonDefinition[] result =
             [
                 .. db
                     .Pokemon.Where(p => p.generation == 1 && p.is_default)
                     .Select(pokemon => BuildPokemon(db, pokemon)),
             ];
-            effectivenesses = GetTypeChart(db);
-            var newCache = new Cache { pokemon = result, effectivenesses = effectivenesses };
+            typeChart = GetTypeChart(db);
+            var newCache = new Cache { pokemon = result, effectivenesses = typeChart };
             // fire and forget
             Task.Run(async () =>
             {
@@ -63,17 +71,17 @@ namespace src.data
                 where typeIds.Contains(e.damage_type_id) && typeIds.Contains(e.target_type_id)
                 select new Effectiveness
                 {
-                    Factor = e.damage_factor_percent / 100.0,
+                    Factor = (EffectivenessLevel)e.damage_factor_percent,
                     Source = (DataClasses.Type)e.damage_type_id,
                     Target = (DataClasses.Type)e.target_type_id,
                 },
             ];
         }
 
-        private static Pokemon BuildPokemon(DatabaseContext db, models.Pokemon pokemon)
+        private static PokemonDefinition BuildPokemon(DatabaseContext db, models.Pokemon pokemon)
         {
             GetStats(db, pokemon, out Pokestats stats);
-            GetMovesAndLearnset(db, pokemon, out Move[] moveObjs, out LearnSet learnset);
+            var learnset = GetLearnset(db, pokemon);
             GetPokemonTypes(
                 db,
                 pokemon,
@@ -81,31 +89,23 @@ namespace src.data
                 out DataClasses.Type? type2obj
             );
 
-            var resultPokemon = new Pokemon
+            var resultPokemon = new PokemonDefinition
             {
                 Name = pokemon.identifier,
                 Stats = stats,
-                EffectiveStats = stats,
                 Type1 = type1obj,
                 Type2 = type2obj,
-                learnset = learnset,
-                moves = moveObjs,
+                Learnset = learnset,
             };
 
             return resultPokemon;
         }
 
-        private static void GetMovesAndLearnset(
-            DatabaseContext db,
-            models.Pokemon pokemon,
-            out Move[] moveObjs,
-            out LearnSet learnset
-        )
+        private static LearnSet GetLearnset(DatabaseContext db, models.Pokemon pokemon)
         {
             var moves = db.PokemonMoves.Where((m) => m.pokemon_id == pokemon.pokemon_id);
             int movesCount = moves.Count();
             var learnMoves = new LearnMove[movesCount];
-            moveObjs = new Move[movesCount];
             int i = 0;
             foreach (var move in moves)
             {
@@ -126,10 +126,9 @@ namespace src.data
                     Level = move.level,
                     isNatural = move.learning_method == LEVEL_UP_MOVE_LEARN_METHOD,
                 };
-                moveObjs[i] = moveObj;
                 i++;
             }
-            learnset = new LearnSet { Moves = learnMoves };
+            return new LearnSet { Moves = learnMoves };
         }
 
         private static void GetPokemonTypes(
