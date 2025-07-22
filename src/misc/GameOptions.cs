@@ -1,4 +1,5 @@
 using MessagePack;
+using static Src.Misc.Utils;
 
 namespace Src.Misc
 {
@@ -25,14 +26,25 @@ namespace Src.Misc
             }
         }
 
+        private static Speed _battleSpeed = Speed.Normal;
+        public static Speed BattleSpeed
+        {
+            get => _battleSpeed;
+            set
+            {
+                _battleSpeed = value;
+                OptionChanged?.Invoke(typeof(GameOptions), OptionEnum.BattleSpeed);
+            }
+        }
+
         public static void Load()
         {
-            if (!File.Exists(Utils.OptionsPath))
+            if (!File.Exists(OptionsPath))
             {
                 return;
             }
             var options = MessagePackSerializer.Deserialize<SavedOptions>(
-                File.ReadAllBytes(Utils.OptionsPath)
+                File.ReadAllBytes(OptionsPath)
             );
             MusicVolume = options.MusicVolume;
             SFXVolume = options.SFXVolume;
@@ -44,14 +56,16 @@ namespace Src.Misc
             {
                 MusicVolume = MusicVolume,
                 SFXVolume = SFXVolume,
+                BattleSpeed = BattleSpeed,
             };
-            File.WriteAllBytes(Utils.OptionsPath, MessagePackSerializer.Serialize(savedOptions));
+            File.WriteAllBytes(OptionsPath, MessagePackSerializer.Serialize(savedOptions));
         }
 
         public enum OptionEnum
         {
             MusicVolume,
             SFXVolume,
+            BattleSpeed,
         }
 
         [MessagePackObject]
@@ -62,6 +76,9 @@ namespace Src.Misc
 
             [Key(1)]
             public required float SFXVolume;
+
+            [Key(2)]
+            public required Speed BattleSpeed;
         }
 
         public static event EventHandler<OptionEnum>? OptionChanged;

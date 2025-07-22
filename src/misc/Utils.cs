@@ -34,6 +34,29 @@ namespace Src.Misc
             return [.. names.Where((n) => n.EndsWith(ending))];
         }
 
+        public enum Speed
+        {
+            Fastest,
+            Fast,
+            Normal,
+            Slow,
+            Slowest,
+        }
+
+        private static readonly Dictionary<Speed, int> Speed2DelayMS = new()
+        {
+            { Speed.Fastest, 100 },
+            { Speed.Fast, 250 },
+            { Speed.Normal, 400 },
+            { Speed.Slow, 550 },
+            { Speed.Slowest, 700 },
+        };
+
+        public static void Delay()
+        {
+            Thread.Sleep(Speed2DelayMS[GameOptions.BattleSpeed]);
+        }
+
         public static void ClearConsoleArea(int startX, int startY, int endX, int endY)
         {
             if (startX > endX)
