@@ -1,6 +1,7 @@
 using Spectre.Console;
 using Src.DataClasses;
 using Src.Misc;
+using static Src.Misc.Sound;
 
 namespace Src.UI
 {
@@ -27,7 +28,9 @@ namespace Src.UI
                 new ConfirmationPrompt("[red]Manually select Pokémon moves?[/]")
             );
             SFXPlayer.Play(Sounds.ButtonPress);
-            var moves = isManuallySelecting ? SelectMoves(selected, level, SFXPlayer) : null;
+            var moves = isManuallySelecting
+                ? SelectMoves(definition: selected, level: level, SFXPlayer: SFXPlayer)
+                : null;
             var pokemon = new Pokemon(definition: selected, moves: moves, level: level);
             if (pokemon.Moves.Length == 0)
             {
