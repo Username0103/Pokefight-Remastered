@@ -33,18 +33,12 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
-          dotnet-quality: 'preview'
 
       - name: Restore dependencies
         run: dotnet restore
 
       - name: Publish for ${{ matrix.rid }}
-        run: |
-          dotnet publish \
-            -c Release \
-            -r ${{ matrix.rid }} \
-            --self-contained true \
-            /p:PublishAot=true
+        run: dotnet publish -c Release -r ${{ matrix.rid }} --self-contained true/p:PublishAot=true
 
       - name: Zip and Upload to Release
         env:
