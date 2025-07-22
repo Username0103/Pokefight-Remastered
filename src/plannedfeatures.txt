@@ -1,3 +1,5 @@
 Actual AI for the enemy.
 Switching pokemon.
 campaign mode that's like a roguelike or something.
+random battle option in main menu for quickness.
+potentially add pokemon cries and move sounds.
