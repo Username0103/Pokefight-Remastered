@@ -9,7 +9,7 @@ namespace Src.DataClasses
         public required LearnMove[] Moves;
 
         [MessagePackObject]
-        public struct LearnMove
+        public record struct LearnMove
         {
             [Key(0)]
             public required int Level;
