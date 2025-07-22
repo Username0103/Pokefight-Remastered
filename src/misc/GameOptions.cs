@@ -48,6 +48,7 @@ namespace Src.Misc
             );
             MusicVolume = options.MusicVolume;
             SFXVolume = options.SFXVolume;
+            BattleSpeed = options.BattleSpeed;
         }
 
         public static void Save()
