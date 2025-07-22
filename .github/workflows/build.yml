@@ -1,0 +1,68 @@
+name: Build
+
+on:
+  release:
+    types: [prereleased, released]
+
+jobs:
+    build_project:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            packages: write
+
+        steps:
+          - name: Check out the repo
+            uses: actions/checkout@main
+
+          - uses: actions/setup-dotnet@main
+            with:
+              dotnet-version: '9.0.x'
+            
+          - uses: gerlero/brew-install@v1
+          
+          - name: install github cli
+            run: brew install gh
+
+          - name: Restore dependencies
+            run: dotnet restore
+
+          - name: Publish Windows
+            shell: bash
+            run: |
+                dotnet publish \
+                -c Release \
+                -r win-x64 \
+                --self-contained true \
+                /p:PublishAot=true
+
+          - name: Publish Linux
+            shell: bash
+            run: |
+                dotnet publish \
+                -c Release \
+                -r linux-x64 \
+                --self-contained true \
+                /p:PublishAot=true
+
+          - name: Publish Mac
+            shell: bash
+            run: |
+                dotnet publish \
+                -c Release \
+                -r osx-x64 \
+                --self-contained true \
+                /p:PublishAot=true
+
+          - name: Add To Release
+            run: |
+                cd ${{github.workspace}}
+                zip -r Pokefight-Remastered-win-x64.zip bin/Release/net9.0/win-x64 -j
+                zip -r Pokefight-Remastered-Linux-x64.zip bin/Release/net9.0//linux-x64 -j
+                zip -r Pokefight-Remastered-mac-x64.zip bin/Release/net9.0//osx-x64  -j
+                gh release upload ${{github.event.release.tag_name}} Pokefight-Remasted-win-x64.zip
+                gh release upload ${{github.event.release.tag_name}} Pokefight-Remasted-Linux-x64.zip
+                gh release upload ${{github.event.release.tag_name}} Pokefight-Remasted-mac-x64.zip
+            env:
+                GITHUB_TOKEN: ${{ github.token }}
+            shell: bash
