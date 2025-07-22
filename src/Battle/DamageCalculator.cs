@@ -4,7 +4,7 @@ using static Src.Misc.Utils;
 
 namespace Src.Battle
 {
-    public static class Damage
+    public static class DamageCalculator
     {
         public static int Calc(
             Pokemon attacker,
