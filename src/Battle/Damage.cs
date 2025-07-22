@@ -81,7 +81,7 @@ namespace Src.Battle
 
         private static bool IsCrit(Pokemon pokemon, bool is_high_crit_move)
         {
-            var speed = (float)pokemon.Stats.Speed;
+            var speed = (float)pokemon.Definition.Stats.Speed;
             var modifier = is_high_crit_move ? 64.0 : 512.0;
             var percent = speed * 100.0 / modifier;
             return (Generator.NextSingle() * 100.0) <= percent;
