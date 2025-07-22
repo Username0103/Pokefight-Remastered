@@ -46,12 +46,6 @@ jobs:
             --self-contained true \
             /p:PublishAot=true
 
-      - name: Install GitHub CLI
-        if: matrix.os != 'windows-latest'
-        run: |
-          brew install gh
-        shell: bash
-
       - name: Zip and Upload to Release
         env:
           GITHUB_TOKEN: ${{ github.token }}
