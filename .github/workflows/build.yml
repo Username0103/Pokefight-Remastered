@@ -41,6 +41,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         working-directory: ${{ github.workspace }}
         run: |
+          rm -rf ${{ matrix.publish_path }}/*.dSYM
           zip -r ${{ matrix.zip_name }} ${{ matrix.publish_path }} -j
           gh release upload ${{ github.event.release.tag_name }} ${{ matrix.zip_name }}
         shell: bash
