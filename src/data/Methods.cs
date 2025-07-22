@@ -9,10 +9,7 @@ namespace Src.Data
     public static class Methods
     {
         private static readonly int LEVEL_UP_MOVE_LEARN_METHOD = 1;
-        public static readonly string CACHE_PATH = Path.Join(
-            Path.GetDirectoryName(Database.GetDbPath()),
-            "DB_cache.bin"
-        );
+        public static readonly string CACHE_PATH = Path.Join(Utils.SystemDataPath, "DB_cache.bin");
 
         [MessagePackObject]
         public struct Cache
@@ -24,22 +21,30 @@ namespace Src.Data
             public required Effectiveness[] effectivenesses;
         }
 
-        // todo: make caching part of the build process rather than running at runtime (to reduce exe size and loading times.)
+        // todo: make caching part of the build process rather than running at runtime (to reduce exe size and the first loading time.)
         // maybe MSBuild?
         public static PokemonDefinition[] GetAllPokemon(out Effectiveness[] typeChart)
         {
-            string dbPath = Database.GetDbPath();
+            string dbPath = Utils.DbPath;
             if (File.Exists(CACHE_PATH))
             {
-                if (File.Exists(dbPath))
+                try
                 {
-                    File.Delete(dbPath);
+                    var cached = MessagePackSerializer.Deserialize<Cache>(
+                        File.ReadAllBytes(CACHE_PATH)
+                    );
+                    if (File.Exists(dbPath))
+                    {
+                        File.Delete(dbPath);
+                    }
+                    typeChart = cached.effectivenesses;
+                    return cached.pokemon;
                 }
-                var cached = MessagePackSerializer.Deserialize<Cache>(
-                    File.ReadAllBytes(CACHE_PATH)
-                );
-                typeChart = cached.effectivenesses;
-                return cached.pokemon;
+                catch (MessagePackSerializationException)
+                {
+                    File.Delete(CACHE_PATH);
+                    return GetAllPokemon(out typeChart);
+                }
             }
             using var db = new DatabaseContext();
             PokemonDefinition[] result =
@@ -91,7 +96,7 @@ namespace Src.Data
 
             var resultPokemon = new PokemonDefinition
             {
-                Name = pokemon.identifier,
+                Name = Utils.Capitalize(pokemon.identifier),
                 Stats = stats,
                 Type1 = type1obj,
                 Type2 = type2obj,
@@ -103,13 +108,17 @@ namespace Src.Data
 
         private static LearnSet GetLearnset(DatabaseContext db, models.Pokemon pokemon)
         {
-            var moves = db.PokemonMoves.Where((m) => m.pokemon_id == pokemon.pokemon_id);
+            var moves = db.PokemonMoves.Where(
+                (m) => m.pokemon_id == pokemon.pokemon_id && m.version_group_id == 1
+            );
             int movesCount = moves.Count();
             var learnMoves = new LearnMove[movesCount];
             int i = 0;
             foreach (var move in moves)
             {
-                var moveDetails = db.Moves.Where((m) => m.move_id == move.move_id).Single();
+                var moveDetails = db
+                    .Moves.Where((m) => m.move_id == move.move_id && m.generation_id == 1)
+                    .Single();
                 var moveObj = new Move
                 {
                     Name = moveDetails.identifier,
