@@ -1,43 +1,74 @@
-﻿using System.Text.Json;
+﻿using MessagePack;
+using Spectre.Console;
 using Src.Data;
+using Src.DataClasses;
 using Src.Misc;
+using Src.UI;
+using static Src.UI.MainMenu;
 
 namespace Src
 {
     public class Program
     {
-        private static readonly JsonSerializerOptions options = new()
-        {
-            IncludeFields = true,
-            WriteIndented = true,
-            IndentSize = 2,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        };
-
         public static void Main(string[] args)
         {
-            var player = new AudioPlayer();
-            player.Play(Song.TitleScreen);
-            Console.ReadKey();
-        }
-
-        private static void PrintAllPokemon()
-        {
             Database.Initialize();
+            AnsiConsole.MarkupLine("[bold italic]Pokefight-Remastered[/]");
+            GameOptions.Load();
             var pokemon = Methods.GetAllPokemon(out var effectivenesses);
-            Console.WriteLine($"Found: {string.Join(", ", pokemon.Select((p) => p.Name))}.");
+            var songPlayer = new AudioPlayer(shouldLoop: true, isMusic: true);
+            var SFXPlayer = new AudioPlayer(shouldLoop: false, isMusic: false);
+            songPlayer.Play(Sounds.TitleScreenSong);
+            Console.WriteLine(GetPokemon(pokemon, SFXPlayer));
         }
 
-        private static void PrintAllData()
+        private static PokemonBattle GetPokemon(
+            PokemonDefinition[] definitions,
+            AudioPlayer effectsPlayer
+        )
         {
-            Database.Initialize();
-            Console.WriteLine("{\nPokemon\": ");
-            Console.Write(
-                JsonSerializer.Serialize(Methods.GetAllPokemon(out var effectivenesses), options)
+            var homework = DisplayMenu(
+                hasLastBattle: File.Exists(Utils.LastBattlePath),
+                SFXPlayer: effectsPlayer
             );
-            Console.WriteLine(",\n\t\"Effectivenesses\":");
-            Console.WriteLine(JsonSerializer.Serialize(effectivenesses, options));
-            Console.Write("}");
+            if (homework == Homework.CreateNew)
+            {
+                StartingPokemonGet.GetStartingPokemon(
+                    definitions,
+                    out var player,
+                    out var enemy,
+                    effectsPlayer
+                );
+                var battleDefinition = new PokemonBattleDefinition()
+                {
+                    Enemy = enemy.Definition,
+                    Player = player.Definition,
+                    EnemyLevel = enemy.Level,
+                    PlayerLevel = player.Level,
+                    EnemyMoves = [.. enemy.Moves.Select((m) => m.Move)],
+                    PlayerMoves = [.. player.Moves.Select((m) => m.Move)],
+                };
+                var battle = new PokemonBattle(player, enemy);
+                File.WriteAllBytes(
+                    Utils.LastBattlePath,
+                    MessagePackSerializer.Serialize(battleDefinition)
+                );
+                return battle;
+            }
+            else if (homework == Homework.UseExisting)
+            {
+                var definition = MessagePackSerializer.Deserialize<PokemonBattleDefinition>(
+                    File.ReadAllBytes(Utils.LastBattlePath)
+                );
+                return new(
+                    new Pokemon(definition.Player, definition.PlayerMoves, definition.PlayerLevel),
+                    new Pokemon(definition.Enemy, definition.EnemyMoves, definition.EnemyLevel)
+                );
+            }
+            else
+            {
+                throw new NotImplementedException($"unrecognized case Homework.{homework}");
+            }
         }
     }
 }
