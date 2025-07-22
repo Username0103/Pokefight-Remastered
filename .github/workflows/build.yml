@@ -18,11 +18,6 @@ jobs:
           - uses: actions/setup-dotnet@main
             with:
               dotnet-version: '9.0.x'
-            
-          - uses: gerlero/brew-install@v1
-          
-          - name: install github cli
-            run: brew install gh
 
           - name: Restore dependencies
             run: dotnet restore
