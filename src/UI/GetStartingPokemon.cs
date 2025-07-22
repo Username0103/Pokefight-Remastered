@@ -1,6 +1,8 @@
+using System.Data;
 using Spectre.Console;
 using Src.DataClasses;
 using Src.Misc;
+using static Src.Misc.Sound;
 
 namespace Src.UI
 {
@@ -28,10 +30,10 @@ namespace Src.UI
             AudioPlayer SFXPlayer
         )
         {
-            var role = isAiSelection ? "AI" : "player";
-            var answer = AnsiConsole.Confirm($"[red]Select {role} Pokemon?[/]");
+            var role = isAiSelection ? "enemy" : "player";
+            var isSelecting = AnsiConsole.Confirm($"[red]Select {role} Pokemon?[/]");
             SFXPlayer.Play(Sounds.ButtonPress);
-            if (answer)
+            if (isSelecting)
             {
                 var pokemon = PokemonSelect.SelectPokemon(pokemonDefinitions, SFXPlayer);
                 level = pokemon.Level;
@@ -40,7 +42,17 @@ namespace Src.UI
             else
             {
                 var index = Utils.Generator.Next(0, pokemonDefinitions.Length);
-                return new(pokemonDefinitions[index], null, level);
+                int i = 0;
+                while (i < 100)
+                {
+                    var pokemon = new Pokemon(pokemonDefinitions[index], null, level);
+                    if (pokemon.Moves.Length > 0)
+                    {
+                        return pokemon;
+                    }
+                    i++;
+                }
+                throw new DataException($"Could not generate a valid pokemon at level {level}.");
             }
         }
     }
