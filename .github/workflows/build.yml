@@ -1,63 +1,62 @@
-name: Build
+name: Build Native AOT
 
 on:
   release:
-    types: [prereleased, released]
+    types: [published]
 
 jobs:
-    build_project:
-        runs-on: ubuntu-latest
-        permissions:
-            contents: write
-            packages: write
+  build_project:
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            zip_name: Pokefight-Remastered-win-x64.zip
+            publish_path: bin/Release/net9.0/win-x64/publish/
+          - os: ubuntu-latest
+            rid: linux-x64
+            zip_name: Pokefight-Remastered-linux-x64.zip
+            publish_path: bin/Release/net9.0/linux-x64/publish/
+          - os: macos-latest
+            rid: osx-x64
+            zip_name: Pokefight-Remastered-osx-x64.zip
+            publish_path: bin/Release/net9.0/osx-x64/publish/
 
-        steps:
-          - name: Check out the repo
-            uses: actions/checkout@main
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
 
-          - uses: actions/setup-dotnet@main
-            with:
-              dotnet-version: '9.0.x'
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+          dotnet-quality: 'preview'
 
-          - name: Restore dependencies
-            run: dotnet restore
+      - name: Restore dependencies
+        run: dotnet restore
 
-          - name: Publish Windows
-            shell: bash
-            run: |
-                dotnet publish \
-                -c Release \
-                -r win-x64 \
-                --self-contained true \
-                /p:PublishAot=true
+      - name: Publish for ${{ matrix.rid }}
+        run: |
+          dotnet publish \
+            -c Release \
+            -r ${{ matrix.rid }} \
+            --self-contained true \
+            /p:PublishAot=true
 
-          - name: Publish Linux
-            shell: bash
-            run: |
-                dotnet publish \
-                -c Release \
-                -r linux-x64 \
-                --self-contained true \
-                /p:PublishAot=true
+      - name: Install GitHub CLI
+        if: matrix.os != 'windows-latest'
+        run: |
+          brew install gh
+        shell: bash
 
-          - name: Publish Mac
-            shell: bash
-            run: |
-                dotnet publish \
-                -c Release \
-                -r osx-x64 \
-                --self-contained true \
-                /p:PublishAot=true
-
-          - name: Add To Release
-            run: |
-                cd ${{github.workspace}}
-                zip -r Pokefight-Remastered-win-x64.zip bin/Release/net9.0/win-x64 -j
-                zip -r Pokefight-Remastered-Linux-x64.zip bin/Release/net9.0//linux-x64 -j
-                zip -r Pokefight-Remastered-mac-x64.zip bin/Release/net9.0//osx-x64  -j
-                gh release upload ${{github.event.release.tag_name}} Pokefight-Remasted-win-x64.zip
-                gh release upload ${{github.event.release.tag_name}} Pokefight-Remasted-Linux-x64.zip
-                gh release upload ${{github.event.release.tag_name}} Pokefight-Remasted-mac-x64.zip
-            env:
-                GITHUB_TOKEN: ${{ github.token }}
-            shell: bash
+      - name: Zip and Upload to Release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          cd ${{ github.workspace }}
+          zip -r ${{ matrix.zip_name }} ${{ matrix.publish_path }}
+          gh release upload ${{ github.event.release.tag_name }} ${{ matrix.zip_name }}
+        shell: bash
