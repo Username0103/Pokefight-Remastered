@@ -22,12 +22,12 @@ namespace Src.DataClasses
             Level = level;
             Stats = new Pokestats
             {
-                HP = CalculateStat(definition.Stats.HP, IsHp: true),
-                Speed = CalculateStat(definition.Stats.Speed, IsHp: false),
-                Attack = CalculateStat(definition.Stats.Attack, IsHp: false),
-                Defense = CalculateStat(definition.Stats.Defense, IsHp: false),
-                SpAttack = CalculateStat(definition.Stats.SpAttack, IsHp: false),
-                SpDefense = CalculateStat(definition.Stats.SpDefense, IsHp: false),
+                HP = CalculateStat(definition.Stats.HP, isHp: true),
+                Speed = CalculateStat(definition.Stats.Speed, isHp: false),
+                Attack = CalculateStat(definition.Stats.Attack, isHp: false),
+                Defense = CalculateStat(definition.Stats.Defense, isHp: false),
+                SpAttack = CalculateStat(definition.Stats.SpAttack, isHp: false),
+                SpDefense = CalculateStat(definition.Stats.SpDefense, isHp: false),
             };
             Health = Stats.HP;
         }
@@ -37,15 +37,16 @@ namespace Src.DataClasses
             return [.. moves.Select((m) => new MoveWithPP { Move = m, PP = new PP(m.PP) })];
         }
 
-        private int CalculateStat(int baseStat, bool IsHp)
+        private int CalculateStat(int baseStat, bool isHp)
         {
             var dv = Generator.Next(0, 16); // 0-15
             // Assume some random stat EXP scaling with your level, since if you're high level you would have battled a lot of pokemon before.
-            var statExp = Level * 65.535 * (Generator.Next(90, 111) / 100.0);
-            statExp = statExp > 65535 ? 65535 : (int)statExp;
-            return (int)(
-                (((baseStat + dv) * 2 + Math.Sqrt(statExp) / 4) / 100) + (IsHp ? 5 : Level + 10)
-            );
+            var statExp = Level * (655.35 / 5.0) * (Generator.Next(90, 101) / 100.0);
+            statExp = statExp > 65535.0 ? 65535 : (int)statExp;
+            var statExpTerm = Math.Floor((Math.Sqrt(Math.Max(0, statExp - 1)) + 1) / 4.0);
+            var core = ((baseStat + dv) * 2.0 + statExpTerm) * Level / 100.0;
+            var result = core + (isHp ? Level + 10.0 : 5.0);
+            return (int)Math.Floor(result);
         }
 
         private Move[] CalculateMoves()
