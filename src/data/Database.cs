@@ -8,10 +8,9 @@ namespace Src.Data
     {
         public static void Initialize()
         {
-            string path = GetDbPath();
-            Directory.CreateDirectory(Path.GetDirectoryName(path) ?? path);
-            if (!File.Exists(path) && !File.Exists(Methods.CACHE_PATH))
-                ExtractDb(path);
+            Directory.CreateDirectory(Path.GetDirectoryName(DbPath) ?? DbPath);
+            if (!File.Exists(DbPath) && !File.Exists(Methods.CACHE_PATH))
+                ExtractDb(DbPath);
         }
 
         private static void ExtractDb(string path)
@@ -35,13 +34,6 @@ namespace Src.Data
             );
             resourceStream.CopyTo(fileStream);
         }
-
-        public static string GetDbPath()
-        {
-            var folder = Environment.SpecialFolder.CommonApplicationData;
-            var path = Environment.GetFolderPath(folder);
-            return Path.Join(path, "Username0103", "PokeFight-Remastered", "Pokedex.db");
-        }
     }
 
     public class DatabaseContext : DbContext
@@ -55,7 +47,7 @@ namespace Src.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
-            options.UseSqlite($"Data Source={Data.Database.GetDbPath()}");
+            options.UseSqlite($"Data Source={DbPath}");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
