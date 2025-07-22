@@ -52,9 +52,9 @@ namespace Src.Misc
             { Speed.Slowest, 700 },
         };
 
-        public static void Delay()
+        public static void Delay(double factor = 1)
         {
-            Thread.Sleep(Speed2DelayMS[GameOptions.BattleSpeed]);
+            Thread.Sleep((int)(Speed2DelayMS[GameOptions.BattleSpeed] * factor));
         }
 
         public static void ClearConsoleArea(int startX, int startY, int endX, int endY)
