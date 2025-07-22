@@ -1,9 +1,11 @@
 ﻿using MessagePack;
 using Spectre.Console;
+using Src.Battle;
 using Src.Data;
 using Src.DataClasses;
 using Src.Misc;
 using Src.UI;
+using static Src.Misc.Sound;
 using static Src.UI.MainMenu;
 
 namespace Src
@@ -13,13 +15,15 @@ namespace Src
         public static void Main(string[] args)
         {
             Database.Initialize();
-            AnsiConsole.MarkupLine("[bold italic]Pokefight-Remastered[/]");
+            AnsiConsole.MarkupLine("[bold italic]Pokéfight-Remastered[/]");
             GameOptions.Load();
             var pokemon = Methods.GetAllPokemon(out var effectivenesses);
-            var songPlayer = new AudioPlayer(shouldLoop: true, isMusic: true);
-            var SFXPlayer = new AudioPlayer(shouldLoop: false, isMusic: false);
+            var songPlayer = new AudioPlayer(isMusic: true);
+            var SFXPlayer = new AudioPlayer(isMusic: false);
             songPlayer.Play(Sounds.TitleScreenSong);
-            Console.WriteLine(GetPokemon(pokemon, SFXPlayer));
+            var battleSetup = GetPokemon(pokemon, SFXPlayer);
+            songPlayer.Play(Sounds.BattleSong);
+            new BattleController(battleSetup, SFXPlayer).Start();
         }
 
         private static PokemonBattle GetPokemon(
