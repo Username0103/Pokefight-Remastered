@@ -1,5 +1,6 @@
 using Spectre.Console;
 using Src.Misc;
+using static Src.Misc.Sound;
 
 namespace Src.UI
 {
@@ -46,23 +47,39 @@ namespace Src.UI
             var (_, startPosRow) = Console.GetCursorPosition();
             while (true)
             {
-                var optionSelections = new Dictionary<string, Action<float>>
+                var optionSelections = new Dictionary<string, Action>
                 {
                     {
                         $"Music Volume ({(int)(GameOptions.MusicVolume * 100)}%)",
-                        (v) =>
+                        () =>
                         {
-                            GameOptions.MusicVolume = groundValue(v) / 100;
+                            var value = AnsiConsole.Ask<float>($"Percentage for Music Volume: ");
+                            GameOptions.MusicVolume = groundValue(value) / 100;
                         }
                     },
                     {
                         $"Effects Volume ({(int)(GameOptions.SFXVolume * 100)}%)",
-                        (v) =>
+                        () =>
                         {
-                            GameOptions.SFXVolume = groundValue(v) / 100;
+                            var value = AnsiConsole.Ask<float>(
+                                $"Percentage for Sound Effect Volume: "
+                            );
+                            GameOptions.SFXVolume = groundValue(value) / 100;
                         }
                     },
-                    { exitText, (_) => { } },
+                    {
+                        $"Game speed ({GameOptions.BattleSpeed})",
+                        () =>
+                        {
+                            var value = AnsiConsole.Prompt(
+                                new SelectionPrompt<Utils.Speed>()
+                                    .Title("Select game speed:")
+                                    .AddChoices(Enum.GetValues<Utils.Speed>())
+                            );
+                            GameOptions.BattleSpeed = value;
+                        }
+                    },
+                    { exitText, () => { } },
                 };
                 var optionName = AnsiConsole.Prompt(
                     new SelectionPrompt<string>()
@@ -81,9 +98,8 @@ namespace Src.UI
                 {
                     break;
                 }
-                var value = AnsiConsole.Ask<float>($"Value for {optionName}: ");
+                optionSelections[optionName]();
                 SFXPlayer.Play(Sounds.ButtonPress);
-                optionSelections[optionName](value);
                 GameOptions.Save();
             }
         }
