@@ -2,6 +2,7 @@ using SoundFlow.Backends.MiniAudio;
 using SoundFlow.Components;
 using SoundFlow.Enums;
 using SoundFlow.Providers;
+using static Src.Misc.Sound;
 
 namespace Src.Misc
 {
@@ -9,16 +10,14 @@ namespace Src.Misc
     {
         private readonly Dictionary<Sounds, string> sound2ResourcePath;
         private SoundPlayer? currentPlayer;
-        private readonly bool shouldLoop;
         private readonly bool isMusic;
 
-        public AudioPlayer(bool shouldLoop, bool isMusic)
+        public AudioPlayer(bool isMusic)
         {
             _ = AudioEngineSingleton.Instance;
             var songPaths = Utils.GetResourcesWithEnding(".flac");
-            sound2ResourcePath = songPaths.ToDictionary(SoundPaths.Get);
+            sound2ResourcePath = songPaths.ToDictionary(ResourceNameToSound, v => v);
             this.isMusic = isMusic;
-            this.shouldLoop = shouldLoop;
         }
 
         public void Play(Sounds sound)
@@ -35,7 +34,6 @@ namespace Src.Misc
             Mixer.Master.AddComponent(player);
             void UpdateVolume() =>
                 player.Volume = isMusic ? GameOptions.MusicVolume : GameOptions.SFXVolume;
-
             UpdateVolume();
             GameOptions.OptionChanged += (_, o) =>
             {
@@ -47,7 +45,12 @@ namespace Src.Misc
                     UpdateVolume();
                 }
             };
-            player.IsLooping = shouldLoop;
+            player.IsLooping = isMusic;
+            SoundToLoopPoints(sound, out var loopStart, out var loopEnd);
+            if (loopStart != null)
+            {
+                player.SetLoopPoints((float)loopStart, loopEnd);
+            }
             player.Play();
             currentPlayer = player;
         }
@@ -69,7 +72,6 @@ namespace Src.Misc
                 _ = new MiniAudioEngine(48000, Capability.Playback);
                 return new AudioEngineSingleton();
             });
-
             public static AudioEngineSingleton Instance
             {
                 get { return lazyInstance.Value; }

@@ -1,16 +1,31 @@
 namespace Src.Misc
 {
-    // Idea: play a specific song depending on your opponent's type1.
-    // so for like for like ghost type play lavander town.
-    public enum Sounds : byte
+    public static class Sound
     {
-        TitleScreenSong,
-        ButtonPress,
-    }
+        public enum Sounds : byte
+        {
+            TitleScreenSong,
+            BattleSong,
+            ButtonPress,
+        }
 
-    public static class SoundPaths
-    {
-        public static Sounds Get(string sound)
+        public static void SoundToLoopPoints(Sounds sound, out float? start, out float? end)
+        {
+            start = sound switch
+            {
+                Sounds.BattleSong => 3,
+                Sounds.TitleScreenSong => 4,
+                _ => null,
+            };
+            end = sound switch
+            {
+                Sounds.TitleScreenSong => 101,
+                Sounds.BattleSong => 99,
+                _ => null,
+            };
+        }
+
+        public static Sounds ResourceNameToSound(string sound)
         {
             if (sound.EndsWith("titleScreen.flac"))
             {
@@ -19,6 +34,10 @@ namespace Src.Misc
             if (sound.EndsWith("buttonPress.flac"))
             {
                 return Sounds.ButtonPress;
+            }
+            if (sound.EndsWith("battleSong.flac"))
+            {
+                return Sounds.BattleSong;
             }
             throw new NotSupportedException($"Could not find sound {sound}.");
         }
