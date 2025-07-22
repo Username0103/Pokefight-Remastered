@@ -36,12 +36,45 @@ jobs:
 
       - working-directory: ${{ github.workspace }}
         run: dotnet publish -c Release -r ${{ matrix.rid }} --self-contained true /p:PublishAot=true
+      
+      - if: '"${{ matrix.os }}" == "windows-latest"'
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+      
+      - if: '"${{ matrix.os }}" == "windows-latest"'
+        shell: python
+        run: |
+          import os
+          import zipfile
+          import random
+
+          publish_path = r'${{ matrix.publish_path }}'
+          zip_name = '${{ matrix.zip_name }}'
+
+          files = []
+          for root, _, filenames in os.walk(publish_path):
+              for filename in filenames:
+                  files.append(os.path.join(root, filename))
+
+          with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zf:
+              seen = set()
+              for file_path in files:
+                  base_name = os.path.basename(file_path)
+                  arc_name = base_name
+                  if arc_name in seen:
+                      arc_name = f'{os.path.splitext(base_name)[0]}_copy{random.randint(1000, 9999)}{os.path.splitext(base_name)[1]}'
+                  seen.add(arc_name)
+                  zf.write(file_path, arcname=arc_name)
 
       - env:
           GITHUB_TOKEN: ${{ github.token }}
         working-directory: ${{ github.workspace }}
         run: |
+          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
           rm -rf ${{ matrix.publish_path }}/*.dSYM
+          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
           zip -r ${{ matrix.zip_name }} ${{ matrix.publish_path }} -j
+          fi
           gh release upload ${{ github.event.release.tag_name }} ${{ matrix.zip_name }}
         shell: bash
