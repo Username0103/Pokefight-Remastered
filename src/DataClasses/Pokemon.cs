@@ -13,13 +13,16 @@ namespace Src.DataClasses
         public Pokemon(PokemonDefinition definition, Move[]? moves, int level)
         {
             Definition = definition;
+            // Definitely don't put this below the other stuff or it'll be 0 by default and that causes big problems.
+            Level = level;
             if (moves != null)
+            {
                 Moves = ExtractPP(moves);
+            }
             else
             {
                 Moves = ExtractPP(CalculateMoves());
             }
-            Level = level;
             Stats = new Pokestats
             {
                 HP = CalculateStat(definition.Stats.HP, isHp: true),
@@ -58,7 +61,7 @@ namespace Src.DataClasses
                     .. (
                         from m in moves
                         where m.isNatural == true && m.Level <= Level
-                        orderby m.Level descending
+                        orderby m.Level
                         select m.Move
                     ).TakeLast(4),
                 ];
