@@ -9,6 +9,7 @@
     <PublishAot>true</PublishAot>
   </PropertyGroup>
   <ItemGroup>
+    <TrimmerRootAssembly Include="Microsoft.EntityFrameworkCore" />
     <EmbeddedResource Include="src\data\pokedex.sqlite" />
     <EmbeddedResource Include="static\*.flac" />
   </ItemGroup>

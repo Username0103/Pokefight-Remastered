@@ -26,26 +26,21 @@ jobs:
             publish_path: bin/Release/net9.0/osx-x64/publish/
 
     steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
 
-      - name: Restore dependencies
-        run: dotnet restore
+      - run: dotnet restore
 
-      - name: Publish for ${{ matrix.rid }}
-        working-directory: ${{ github.workspace }}
+      - working-directory: ${{ github.workspace }}
         run: dotnet publish -c Release -r ${{ matrix.rid }} --self-contained true /p:PublishAot=true
 
-      - name: Zip and Upload to Release
-        env:
+      - env:
           GITHUB_TOKEN: ${{ github.token }}
+        working-directory: ${{ github.workspace }}
         run: |
-          cd ${{ github.workspace }}
-          zip -r ${{ matrix.zip_name }} ${{ matrix.publish_path }}
+          zip -r ${{ matrix.zip_name }} ${{ matrix.publish_path }} -j
           gh release upload ${{ github.event.release.tag_name }} ${{ matrix.zip_name }}
         shell: bash
