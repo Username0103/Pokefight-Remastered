@@ -37,12 +37,12 @@ jobs:
       - working-directory: ${{ github.workspace }}
         run: dotnet publish -c Release -r ${{ matrix.rid }}
       
-      - if: '"${{ matrix.os }}" == "windows-latest"'
+      - if: '"${{ matrix.rid }}" == "win-x64"'
         uses: actions/setup-python@v5
         with:
           python-version: 3.12
       
-      - if: '"${{ matrix.os }}" == "windows-latest"'
+      - if: '"${{ matrix.rid }}" == "win-x64"'
         shell: python
         run: |
           import os
