@@ -21,9 +21,9 @@ jobs:
             zip_name: Pokefight-Remastered-linux-x64.zip
             publish_path: bin/Release/net9.0/linux-x64/publish/
           - os: macos-latest
-            rid: osx-arm64
-            zip_name: Pokefight-Remastered-osx-arm64.zip
-            publish_path: bin/Release/net9.0/osx-arm64/publish/
+            rid: osx-x64
+            zip_name: Pokefight-Remastered-osx-x64.zip
+            publish_path: bin/Release/net9.0/osx-x64/publish/
 
     steps:
       - uses: actions/checkout@v4
@@ -73,6 +73,7 @@ jobs:
         run: |
           if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
           rm -rf ${{ matrix.publish_path }}/*.dSYM
+          fi
           if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
           zip -r ${{ matrix.zip_name }} ${{ matrix.publish_path }} -j
           fi
