@@ -15,18 +15,41 @@ namespace Src
         public static void Main(string[] args)
         {
             Database.Initialize();
-            AnsiConsole.MarkupLine("[bold italic]Pokéfight-Remastered[/]");
+            DisplayTitle();
+            Load(out var pokemon, out var effectivenesses);
             GameOptions.Load();
-            var pokemon = Methods.GetAllPokemon(out var effectivenesses);
             var songPlayer = new AudioPlayer(isMusic: true);
             var SFXPlayer = new AudioPlayer(isMusic: false);
             songPlayer.Play(Sounds.TitleScreenSong);
-            var battleSetup = GetPokemon(pokemon, SFXPlayer);
+            var battleSetup = SetupBattle(pokemon, SFXPlayer);
             songPlayer.Play(Sounds.BattleSong);
-            new BattleController(battleSetup, SFXPlayer).Start();
+            new BattleController(battleSetup, SFXPlayer, effectivenesses).Start();
         }
 
-        private static PokemonBattle GetPokemon(
+        private static void Load(
+            out PokemonDefinition[] pokemon,
+            out Effectiveness[] effectivenesses
+        )
+        {
+            (effectivenesses, pokemon) = AnsiConsole
+                .Status()
+                .Spinner(Spinner.Known.Line)
+                .Start(
+                    "Loading...",
+                    (c) =>
+                    {
+                        Methods.LoadAllData(out var effectivenesses, out var pokemon);
+                        return (effectivenesses, pokemon);
+                    }
+                );
+        }
+
+        private static void DisplayTitle()
+        {
+            AnsiConsole.MarkupLine("[bold italic]Pokéfight-Remastered[/]");
+        }
+
+        private static PokemonBattle SetupBattle(
             PokemonDefinition[] definitions,
             AudioPlayer effectsPlayer
         )
