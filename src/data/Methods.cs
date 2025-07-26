@@ -23,7 +23,10 @@ namespace Src.Data
 
         // todo: make caching part of the build process rather than running at runtime (to reduce exe size and the first loading time.)
         // maybe MSBuild?
-        public static PokemonDefinition[] GetAllPokemon(out Effectiveness[] typeChart)
+        public static void LoadAllData(
+            out Effectiveness[] typeChart,
+            out PokemonDefinition[] pokemonDefinitions
+        )
         {
             string dbPath = Utils.DbPath;
             if (File.Exists(CACHE_PATH))
@@ -38,23 +41,26 @@ namespace Src.Data
                         File.Delete(dbPath);
                     }
                     typeChart = cached.effectivenesses;
-                    return cached.pokemon;
+                    pokemonDefinitions = cached.pokemon;
                 }
                 catch (MessagePackSerializationException)
                 {
                     File.Delete(CACHE_PATH);
-                    return GetAllPokemon(out typeChart);
+                    // make sure the DB is extracted
+                    Database.Initialize();
+                    LoadAllData(out typeChart, out pokemonDefinitions);
+                    return;
                 }
             }
             using var db = new DatabaseContext();
-            PokemonDefinition[] result =
+            pokemonDefinitions =
             [
                 .. db
                     .Pokemon.Where(p => p.generation == 1 && p.is_default)
                     .Select(pokemon => BuildPokemon(db, pokemon)),
             ];
             typeChart = GetTypeChart(db);
-            var newCache = new Cache { pokemon = result, effectivenesses = typeChart };
+            var newCache = new Cache { pokemon = pokemonDefinitions, effectivenesses = typeChart };
             // fire and forget
             Task.Run(async () =>
             {
@@ -63,8 +69,6 @@ namespace Src.Data
                 await stream.FlushAsync();
                 File.Delete(dbPath);
             });
-
-            return result;
         }
 
         private static Effectiveness[] GetTypeChart(DatabaseContext db)
